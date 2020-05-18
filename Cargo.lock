@@ -3085,6 +3085,8 @@ name = "td-amethyst"
 version = "0.1.0"
 dependencies = [
  "amethyst 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ron 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.110 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

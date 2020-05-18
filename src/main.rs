@@ -1,16 +1,21 @@
+mod utils;
+mod camera;
+
 use amethyst::{
     prelude::*,
     core::transform::{Transform, TransformBundle},
     renderer::{
-        Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
+        SpriteRender, SpriteSheet,
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
         RenderingBundle,
     },
     utils::application_root_dir,
     ecs::prelude::{Component, DenseVecStorage},
-    assets::{AssetStorage, Loader, Handle},
+    assets::{Handle},
 };
+use utils::load_sprite_sheet;
+use camera::initialise_camera;
 
 pub const BLOCK_HEIGHT: f32 = 16.0;
 pub const BLOCK_WIDTH: f32 = 4.0;
@@ -18,17 +23,6 @@ pub const BLOCK_WIDTH: f32 = 4.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 pub const ARENA_WIDTH: f32 = 100.0;
 
-fn initialise_camera(world: &mut World) {
-    // Setup camera in a way that our screen covers whole arena and (0, 0) is in the bottom left. 
-    let mut transform = Transform::default();
-    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 1.0);
-
-    world
-        .create_entity()
-        .with(Camera::standard_2d(ARENA_WIDTH, ARENA_HEIGHT))
-        .with(transform)
-        .build();
-}
 
 struct MyState;
 
@@ -68,31 +62,6 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
         .build();
 }
 
-fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
-    // Load the sprite sheet necessary to render the graphics.
-    // The texture is the pixel data
-    // `texture_handle` is a cloneable reference to the texture
-    let texture_handle = {
-        let loader = world.read_resource::<Loader>();
-        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load(
-            "hyptosis_sprites.png",
-            ImageFormat::default(),
-            (),
-            &texture_storage,
-        )
-    };
-
-    let loader = world.read_resource::<Loader>();
-    let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
-    loader.load(
-        "hyptosis_sprites.ron", // Here we load the associated ron file
-        SpriteSheetFormat(texture_handle), // We pass it the texture we want it to use
-        (),
-        &sprite_sheet_store,
-    )
-}
-
 impl SimpleState for MyState {
     fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         let world = _data.world;
@@ -113,8 +82,7 @@ fn main() -> amethyst::Result<()> {
     let app_root = application_root_dir()?;
 
     let assets_dir = app_root.join("assets");
-    let config_dir = app_root.join("config");
-    let display_config_path = config_dir.join("display.ron");
+    let display_config_path = app_root.join("config").join("display.ron");
 
     let game_data = GameDataBuilder::default()
         .with_bundle(
