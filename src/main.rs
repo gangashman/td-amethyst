@@ -70,7 +70,6 @@ impl SimpleState for MyState {
         
         let sprite_sheet_handle = load_sprite_sheet(world);
 
-        load_sprite_sheet(world);
         initialise_blocks(world, sprite_sheet_handle);
         initialise_camera(world);
     }
@@ -89,7 +88,7 @@ fn main() -> amethyst::Result<()> {
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
                     RenderToWindow::from_config_path(display_config_path)?
-                        .with_clear([0.34, 0.36, 0.52, 1.0]),
+                        .with_clear([0.0, 0.0, 0.0, 1.0]),
                 )
                 .with_plugin(RenderFlat2D::default()),
         )?
