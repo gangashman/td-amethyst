@@ -8,6 +8,8 @@ edition = "2018"
 amethyst = "0.15.0"
 amethyst_window = "*"
 amethyst_input = "*"
+amethyst_tiles = "*"
+nalgebra = "*"
 ron = "*"
 serde = "*"
 

@@ -13,13 +13,13 @@ use amethyst::{
     utils::application_root_dir,
     ecs::prelude::{Component, DenseVecStorage},
     assets::{Handle},
+    input::{InputBundle, StringBindings},
 };
+use nalgebra::base::Vector3;
 use utils::load_sprite_sheet;
+use camera::{initialise_camera, CameraSystem};
+use amethyst_tiles::{DrawTiles2D, TileMap, Tile, CoordinateEncoder};
 
-use camera::initialise_camera;
-pub use self::camera::CameraSystem;
-
-use amethyst::input::{InputBundle, StringBindings};
 
 pub const BLOCK_HEIGHT: f32 = 16.0;
 pub const BLOCK_WIDTH: f32 = 4.0;
@@ -27,8 +27,8 @@ pub const BLOCK_WIDTH: f32 = 4.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 pub const ARENA_WIDTH: f32 = 100.0;
 
+pub const BLOCK_SIZE: i32 = 32;
 
-struct MyState;
 
 pub struct Block {
     pub width: f32,
@@ -48,12 +48,12 @@ impl Component for Block {
     type Storage = DenseVecStorage<Self>;
 }
 
-fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
+fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>, sprite_number: usize) {
     let mut block_transform = Transform::default();
 
     let sprite_render = SpriteRender {
         sprite_sheet: sprite_sheet_handle,
-        sprite_number: 0,
+        sprite_number: sprite_number,
     };
     
     block_transform.set_translation_xyz(BLOCK_WIDTH * 0.5, ARENA_HEIGHT / 2.0, 0.0);
@@ -66,7 +66,13 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
         .build();
 }
 
-impl SimpleState for MyState {
+fn initialise_map<T: Tile, E: CoordinateEncoder>(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
+    let tilemap = TileMap::<T, E>::new(Vector3::new(32, 32, 1), Vector3::new(32, 32, 1), Some(sprite_sheet_handle));
+}
+
+struct GameState;
+
+impl SimpleState for GameState {
     fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         let world = _data.world;
 
@@ -76,7 +82,7 @@ impl SimpleState for MyState {
             world, "images/hyptosis_sprites.png", "images/hyptosis_sprites.ron"
         );
 
-        initialise_blocks(world, sprite_sheet_handle);
+        initialise_blocks(world, sprite_sheet_handle, 0);
         initialise_camera(world);
     }
 }
@@ -105,10 +111,10 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(TransformBundle::new())?
 
         .with_bundle(input_bundle)?
-        .with(camera::CameraSystem, "camera_system", &["input_system"])
+        .with(CameraSystem, "camera_system", &["input_system"])
         ;
 
-    let mut game = Application::new(assets_dir, MyState, game_data)?;
+    let mut game = Application::new(assets_dir, GameState, game_data)?;
     game.run();
 
     Ok(())
