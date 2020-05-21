@@ -1,0 +1,16 @@
+(
+    axes: {
+        "updown": Emulated(
+            pos: Key(Up),
+            neg: Key(Down)
+        ),
+        "leftright": Emulated(
+            pos: Key(Right),
+            neg: Key(Left)
+        ),
+        "scrool": MouseWheel(
+            horizontal: false
+        )
+    },
+    actions: {},
+)

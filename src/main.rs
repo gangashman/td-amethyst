@@ -15,7 +15,11 @@ use amethyst::{
     assets::{Handle},
 };
 use utils::load_sprite_sheet;
+
 use camera::initialise_camera;
+pub use self::camera::CameraSystem;
+
+use amethyst::input::{InputBundle, StringBindings};
 
 pub const BLOCK_HEIGHT: f32 = 16.0;
 pub const BLOCK_WIDTH: f32 = 4.0;
@@ -68,7 +72,9 @@ impl SimpleState for MyState {
 
         world.register::<Block>();
         
-        let sprite_sheet_handle = load_sprite_sheet(world);
+        let sprite_sheet_handle = load_sprite_sheet(
+            world, "images/hyptosis_sprites.png", "images/hyptosis_sprites.ron"
+        );
 
         initialise_blocks(world, sprite_sheet_handle);
         initialise_camera(world);
@@ -83,6 +89,10 @@ fn main() -> amethyst::Result<()> {
     let assets_dir = app_root.join("assets");
     let display_config_path = app_root.join("config").join("display.ron");
 
+    let binding_path = app_root.join("config").join("bindings.ron");
+    let input_bundle = InputBundle::<StringBindings>::new()
+        .with_bindings_from_file(binding_path)?;
+    
     let game_data = GameDataBuilder::default()
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
@@ -92,7 +102,11 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderFlat2D::default()),
         )?
-        .with_bundle(TransformBundle::new())?;
+        .with_bundle(TransformBundle::new())?
+
+        .with_bundle(input_bundle)?
+        .with(camera::CameraSystem, "camera_system", &["input_system"])
+        ;
 
     let mut game = Application::new(assets_dir, MyState, game_data)?;
     game.run();
