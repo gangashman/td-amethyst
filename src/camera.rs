@@ -1,14 +1,20 @@
 use amethyst::{
     prelude::*,
-    renderer::Camera,
     utils::application_root_dir,
+    ecs::{
+        Join, Read, ReadStorage, System, WriteStorage, Entities,
+    },
+    core::{
+        math::Vector3,
+        Transform,
+    },
+    renderer::{
+        camera::{ActiveCamera, Camera},
+    },
 };
 use std::fs::File;
 use amethyst_input::VirtualKeyCode;
 
-use amethyst::core::{Transform};
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, World, WriteStorage};
 use amethyst::input::{InputHandler, StringBindings};
 use amethyst_window::{DisplayConfig};
 
@@ -43,34 +49,41 @@ pub fn initialise_camera(world: &mut World) {
         .build();
 }
 
-#[derive(SystemDesc)]
+#[derive(Default)]
 pub struct CameraSystem;
 
 impl<'s> System<'s> for CameraSystem {
     type SystemData = (
-        WriteStorage<'s, Transform>,
+        Read<'s, ActiveCamera>,
+        Entities<'s>,
         ReadStorage<'s, Camera>,
+        WriteStorage<'s, Transform>,
         Read<'s, InputHandler<StringBindings>>,
     );
 
-    fn run(&mut self, (mut transforms, cameras, input): Self::SystemData) {
-        for (_camera, transform) in (&cameras, &mut transforms).join() {
-            let multiplayer = match input.key_is_down(VirtualKeyCode::LShift) {
-                true => 2.0,
-                false => 1.0,
-            };
-            let updown = input.axis_value("updown");
-            if let Some(mv_updown) = updown {
-                if mv_updown != 0.0 {
-                    transform.prepend_translation_y(3.0 * mv_updown as f32 * multiplayer);
-                }
-            }
+    fn run(&mut self, (active_camera, entities, cameras, mut transforms, input): Self::SystemData) {
+        let multiplayer = match input.key_is_down(VirtualKeyCode::LShift) {
+            true => 2.0,
+            false => 1.0,
+        };
+        let y_move = input.axis_value("updown").unwrap();
+        let x_move = input.axis_value("leftright").unwrap();
+        let scrool = input.axis_value("scrool").unwrap();
 
-            let leftright = input.axis_value("leftright");
-            if let Some(mv_leftright) = leftright {
-                if mv_leftright != 0.0 {
-                    transform.prepend_translation_x(3.0 * mv_leftright as f32 * multiplayer);
-                }
+        if x_move != 0.0 || y_move != 0.0 || scrool != 0.0 {
+            let mut camera_join = (&cameras, &mut transforms).join();
+            if let Some((_, camera_transform)) = active_camera
+                .entity
+                .and_then(|a| camera_join.get(a, &entities))
+                .or_else(|| camera_join.next())
+            {
+                camera_transform.prepend_translation_x(x_move * 2.0 * multiplayer);
+                camera_transform.prepend_translation_y(y_move * 2.0 * multiplayer);
+
+                let z_scale = 0.04 * scrool;
+                let scale = camera_transform.scale();
+                let scale = Vector3::new(scale.x + z_scale, scale.y + z_scale, scale.z + z_scale);
+                camera_transform.set_scale(scale);
             }
         }
     }

@@ -68,6 +68,15 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
 
 fn initialise_map<T: Tile, E: CoordinateEncoder>(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
     let tilemap = TileMap::<T, E>::new(Vector3::new(32, 32, 1), Vector3::new(32, 32, 1), Some(sprite_sheet_handle));
+
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(0.0, 0.0, 0.0);
+
+    world
+        .create_entity()
+        .with(tilemap)
+        .with(transform)
+        .build();
 }
 
 struct GameState;
@@ -84,6 +93,8 @@ impl SimpleState for GameState {
 
         initialise_blocks(world, sprite_sheet_handle, 0);
         initialise_camera(world);
+
+        // initialise_map::<dyn Tile, dyn CoordinateEncoder>(world, sprite_sheet_handle);
     }
 }
 
