@@ -6,12 +6,12 @@ edition = "2018"
 
 [dependencies]
 amethyst = "0.15.0"
-amethyst_window = "*"
-amethyst_input = "*"
-amethyst_tiles = "*"
+amethyst_window = "0.5.0"
+amethyst_input = "0.11.0"
+amethyst_tiles = "0.3.0"
 nalgebra = "*"
 ron = "*"
-serde = "*"
+winit = "*"
 
 [features]
 default = ["vulkan"]

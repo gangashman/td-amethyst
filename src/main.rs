@@ -1,5 +1,6 @@
 mod utils;
 mod camera;
+mod map;
 
 use amethyst::{
     prelude::*,
@@ -12,13 +13,14 @@ use amethyst::{
     },
     utils::application_root_dir,
     ecs::prelude::{Component, DenseVecStorage},
-    assets::{Handle},
     input::{InputBundle, StringBindings},
+    assets::{Handle, ProgressCounter},
+    ui::{RenderUi, UiBundle, UiCreator},
 };
-use nalgebra::base::Vector3;
+use amethyst_tiles::{MortonEncoder, RenderTiles2D};
 use utils::load_sprite_sheet;
-use camera::{initialise_camera, CameraSystem};
-use amethyst_tiles::{DrawTiles2D, TileMap, Tile, CoordinateEncoder};
+use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
+use map::{initialise_map, BlockTile};
 
 
 pub const BLOCK_HEIGHT: f32 = 16.0;
@@ -66,24 +68,16 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
         .build();
 }
 
-fn initialise_map<T: Tile, E: CoordinateEncoder>(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
-    let tilemap = TileMap::<T, E>::new(Vector3::new(32, 32, 1), Vector3::new(32, 32, 1), Some(sprite_sheet_handle));
-
-    let mut transform = Transform::default();
-    transform.set_translation_xyz(0.0, 0.0, 0.0);
-
-    world
-        .create_entity()
-        .with(tilemap)
-        .with(transform)
-        .build();
+#[derive(Default)]
+struct GameState {
+    pub progress_counter: Option<ProgressCounter>,
 }
-
-struct GameState;
 
 impl SimpleState for GameState {
     fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         let world = _data.world;
+
+        self.progress_counter = Some(Default::default());
 
         world.register::<Block>();
         
@@ -92,9 +86,20 @@ impl SimpleState for GameState {
         );
 
         initialise_blocks(world, sprite_sheet_handle, 0);
+
+        world.exec(|mut creator: UiCreator<'_>| {
+            creator.create(
+                "ui/main.ron",
+                self.progress_counter.as_mut().unwrap(),
+            );
+        });
+        
         initialise_camera(world);
 
-        // initialise_map::<dyn Tile, dyn CoordinateEncoder>(world, sprite_sheet_handle);
+        let batch_1_sprite_sheet_handle = load_sprite_sheet(
+            world, "images/hyptosis_tile-art-batch-1.png", "images/hyptosis_tile-art-batch-1.ron"
+        );
+        initialise_map(world, batch_1_sprite_sheet_handle);
     }
 }
 
@@ -117,15 +122,20 @@ fn main() -> amethyst::Result<()> {
                     RenderToWindow::from_config_path(display_config_path)?
                         .with_clear([0.0, 0.0, 0.0, 1.0]),
                 )
-                .with_plugin(RenderFlat2D::default()),
+                .with_plugin(RenderFlat2D::default())
+                .with_plugin(RenderUi::default())
+                .with_plugin(RenderTiles2D::<BlockTile, MortonEncoder>::default()),
         )?
         .with_bundle(TransformBundle::new())?
 
         .with_bundle(input_bundle)?
+        .with_bundle(UiBundle::<StringBindings>::new())?
+
         .with(CameraSystem, "camera_system", &["input_system"])
+        .with(MouseRaycastSystem, "mouse_raycast_system", &["input_system"])
         ;
 
-    let mut game = Application::new(assets_dir, GameState, game_data)?;
+    let mut game = Application::new(assets_dir, GameState::default(), game_data)?;
     game.run();
 
     Ok(())
