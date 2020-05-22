@@ -12,6 +12,8 @@ amethyst_tiles = "0.3.0"
 nalgebra = "*"
 ron = "*"
 winit = "*"
+serde_json = "1.0"
+serde = "1.0.110"
 
 [features]
 default = ["vulkan"]

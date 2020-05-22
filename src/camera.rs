@@ -37,10 +37,7 @@ pub fn initialise_camera(world: &mut World) {
     let display_conf_file = File::open(&display_config_path).expect("Failed opening file");
 
     let display_config: DisplayConfig = match from_reader(display_conf_file) {
-        Ok(e) => {
-            // println!("DisplayConfig: {:#?}", e);
-            e
-        },
+        Ok(e) => e,
         Err(e) => {
             println!("Failed to load display config: {}", e);
             std::process::exit(1);
@@ -87,10 +84,10 @@ impl<'s> System<'s> for CameraSystem {
                 .and_then(|a| camera_join.get(a, &entities))
                 .or_else(|| camera_join.next())
             {
-                camera_transform.prepend_translation_x(x_move * 2.0 * multiplayer);
-                camera_transform.prepend_translation_y(y_move * 2.0 * multiplayer);
+                camera_transform.prepend_translation_x(x_move * 20.0 * multiplayer);
+                camera_transform.prepend_translation_y(y_move * 20.0 * multiplayer);
 
-                let z_scale = 0.04 * scrool;
+                let z_scale = 0.3 * scrool;
                 let scale = camera_transform.scale();
                 let scale = Vector3::new(scale.x + z_scale, scale.y + z_scale, scale.z + z_scale);
                 camera_transform.set_scale(scale);
@@ -98,7 +95,6 @@ impl<'s> System<'s> for CameraSystem {
         }
     }
 }
-
 
 #[derive(SystemDesc)]
 pub struct MouseRaycastSystem;
@@ -116,7 +112,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
         Read<'s, ActiveCamera>,
         Read<'s, InputHandler<StringBindings>>,
         UiFinder<'s>,
-        ReadStorage<'s, TileMap<BlockTile, MortonEncoder>>,
+        WriteStorage<'s, TileMap<BlockTile, MortonEncoder>>,
     );
 
     fn run(
@@ -133,7 +129,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
             active_camera,
             input,
             ui_finder,
-            tilemaps,
+            mut tilemaps,
         ): Self::SystemData,
     ) {
         // Get the mouse position if its available
@@ -154,22 +150,15 @@ impl<'s> System<'s> for MouseRaycastSystem {
                 let distance = ray.intersect_plane(&Plane::with_z(0.0)).unwrap();
                 let mouse_world_position = ray.at_distance(distance);
 
-                if let Some(t) = ui_finder
-                    .find("mouse_position")
-                    .and_then(|e| ui_texts.get_mut(e))
-                {
-                    t.text = format!(
-                        "({:.0}, {:.0})",
-                        mouse_world_position.x, mouse_world_position.y
-                    );
-                }
-
                 // TileMap click
                 if input.mouse_button_is_down(MouseButton::Left) {
-                    for tilemap in (&tilemaps).join() {
+                    for tilemap in (&mut tilemaps).join() {
                         let pos = Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.0);
                         match tilemap.to_tile(&pos, None) {
-                            Ok(p) => println!("{}", p),
+                            Ok(p) => {
+                                println!("{}", p);
+                                // let mut point = tilemap.get_mut(&p);
+                            },
                             Err(_e) => (),
                         }
                     }

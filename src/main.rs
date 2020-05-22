@@ -69,7 +69,7 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
 }
 
 #[derive(Default)]
-struct GameState {
+pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
 }
 
@@ -99,7 +99,7 @@ impl SimpleState for GameState {
         let batch_1_sprite_sheet_handle = load_sprite_sheet(
             world, "images/hyptosis_tile-art-batch-1.png", "images/hyptosis_tile-art-batch-1.ron"
         );
-        initialise_map(world, batch_1_sprite_sheet_handle);
+        initialise_map(world, batch_1_sprite_sheet_handle, "assets/levels/1_40_40.json");
     }
 }
 
