@@ -31,17 +31,23 @@ pub struct LevelData {
     pub tilewidth: u32,
 }
 
-#[derive(Default, Clone)]
-pub struct BlockTile;
-impl Tile for BlockTile {
-    fn sprite(&self, point: Point3<u32>, world: &World) -> Option<usize> {
-        match world.fetch::<LevelData>().layers.iter().find(|&x| x.id == point.z + 1) {
+impl LevelData {
+    pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
+        match self.layers.iter().find(|&x| x.id == point.z + 1) {
             Some(e) => {
-                let index: usize = (point.y * world.fetch::<LevelData>().height + point.x) as usize;
+                let index: usize = (point.y * self.height + point.x) as usize;
                 Some((e.data[index]) as usize)
             },
             None => None
         }
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct BlockTile;
+impl Tile for BlockTile {
+    fn sprite(&self, point: Point3<u32>, world: &World) -> Option<usize> {
+        world.fetch::<LevelData>().get_id_in_point(point, world)
     }
 }
 

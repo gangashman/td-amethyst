@@ -23,15 +23,6 @@ use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile};
 
 
-pub const BLOCK_HEIGHT: f32 = 16.0;
-pub const BLOCK_WIDTH: f32 = 4.0;
-
-pub const ARENA_HEIGHT: f32 = 100.0;
-pub const ARENA_WIDTH: f32 = 100.0;
-
-pub const BLOCK_SIZE: i32 = 32;
-
-
 pub struct Block {
     pub width: f32,
     pub height: f32,
@@ -58,7 +49,7 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
         sprite_number: sprite_number,
     };
     
-    block_transform.set_translation_xyz(BLOCK_WIDTH * 0.5, ARENA_HEIGHT / 2.0, 0.0);
+    block_transform.set_translation_xyz(0.0, 0.0, 0.0);
 
     world
         .create_entity()
@@ -89,8 +80,7 @@ impl SimpleState for GameState {
 
         world.exec(|mut creator: UiCreator<'_>| {
             creator.create(
-                "ui/main.ron",
-                self.progress_counter.as_mut().unwrap(),
+                "ui/main.ron", self.progress_counter.as_mut().unwrap(),
             );
         });
         
