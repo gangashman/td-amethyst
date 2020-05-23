@@ -2,7 +2,7 @@ use amethyst::{
     prelude::*,
     utils::application_root_dir,
     ecs::{
-        Join, Read, ReadStorage, System, WriteStorage,
+        Join, Read, ReadStorage, System, WriteStorage, Write,
         Entities, ReadExpect, SystemData,
     },
     core::{
@@ -21,7 +21,7 @@ use amethyst::{
 use std::fs::File;
 use amethyst_input::VirtualKeyCode;
 use amethyst_tiles::{MortonEncoder, TileMap, Map};
-use crate::map::BlockTile;
+use crate::map::{BlockTile, LevelData};
 use winit::MouseButton;
 
 use amethyst::input::{InputHandler, StringBindings};
@@ -113,6 +113,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
         Read<'s, InputHandler<StringBindings>>,
         UiFinder<'s>,
         WriteStorage<'s, TileMap<BlockTile, MortonEncoder>>,
+        Write<'s, LevelData>,
     );
 
     fn run(
@@ -130,6 +131,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
             input,
             ui_finder,
             mut tilemaps,
+            mut level_data,
         ): Self::SystemData,
     ) {
         // Get the mouse position if its available
@@ -158,6 +160,8 @@ impl<'s> System<'s> for MouseRaycastSystem {
                             Ok(p) => {
                                 println!("{}", p);
                                 // let mut point = tilemap.get_mut(&p);
+                                // tilemap.change_id_on_point(p, world);
+                                level_data.change_id_on_point(p, 616);
                             },
                             Err(_e) => (),
                         }

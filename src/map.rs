@@ -32,14 +32,36 @@ pub struct LevelData {
 }
 
 impl LevelData {
-    pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
-        match self.layers.iter().find(|&x| x.id == point.z + 1) {
-            Some(e) => {
-                let index: usize = (point.y * self.height + point.x) as usize;
-                Some((e.data[index]) as usize)
-            },
-            None => None
+    pub fn get_mut_layer(&mut self, layer_index: u32) -> &mut LayerData {
+        for layer in self.layers.iter_mut() {
+            if layer.id == layer_index + 1 {
+                return layer;
+            }
         }
+        println!("Failed to get layer {}", layer_index);
+        std::process::exit(1);
+    }
+    pub fn get_layer(&self, layer_index: u32) -> &LayerData {
+        match self.layers.iter().find(|&x| x.id == layer_index + 1) {
+            Some(e) => e,
+            None => {
+                println!("Failed to get layer {}", layer_index);
+                std::process::exit(1);
+            }
+        }
+    }
+
+    pub fn x_y_to_index(&self, x: u32, y: u32) -> usize {
+        (y * self.height + x) as usize
+    }
+
+    pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
+        Some((self.get_layer(point.z).data[self.x_y_to_index(point.x, point.y)]) as usize)
+    }
+
+    pub fn change_id_on_point(&mut self, point: Point3<u32>, new_id: u32) {
+        let index = LevelData::x_y_to_index(&self, point.x, point.y);
+        self.get_mut_layer(point.z).data[index] = new_id;
     }
 }
 
@@ -47,7 +69,7 @@ impl LevelData {
 pub struct BlockTile;
 impl Tile for BlockTile {
     fn sprite(&self, point: Point3<u32>, world: &World) -> Option<usize> {
-        world.fetch::<LevelData>().get_id_in_point(point, world)
+        world.fetch::<LevelData>().get_id_in_point(point)
     }
 }
 

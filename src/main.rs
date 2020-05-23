@@ -22,20 +22,8 @@ use utils::load_sprite_sheet;
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile};
 
-
-pub struct Block {
-    pub width: f32,
-    pub height: f32,
-}
-
-impl Block {
-    fn new() -> Block {
-        Block {
-            width: BLOCK_WIDTH,
-            height: BLOCK_HEIGHT,
-        }
-    }
-}
+#[derive(Default)]
+pub struct Block;
 
 impl Component for Block {
     type Storage = DenseVecStorage<Self>;
@@ -54,7 +42,7 @@ fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>
     world
         .create_entity()
         .with(sprite_render.clone())
-        .with(Block::new())
+        .with(Block::default())
         .with(block_transform)
         .build();
 }
