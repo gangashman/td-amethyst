@@ -1,8 +1,10 @@
 #![enable(implicit_some)]
 
 Grid((
-    texture_width: 32,
-    texture_height: 32,
-    columns: 30,
-    sprite_count: 900
-))
+        texture_width: 960,
+        texture_height: 960,
+        columns: 30,
+        rows: 30,
+        sprite_count: 900,
+        cell_size: (32, 32)
+    ))

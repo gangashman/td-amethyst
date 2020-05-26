@@ -5,12 +5,12 @@ use amethyst::{
     },
     prelude::*,
     renderer::{
-        sprite::{SpriteSheet},
+        sprite::{SpriteSheet}, Transparent,
     },
     assets::{Handle},
 };
 use std::fs;
-use amethyst_tiles::{MortonEncoder, Tile, TileMap};
+use amethyst_tiles::{MortonEncoder, Tile, TileMap, DrawTiles2D};
 use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize)]
@@ -33,16 +33,17 @@ pub struct LevelData {
 
 impl LevelData {
     pub fn get_mut_layer(&mut self, layer_index: u32) -> &mut LayerData {
+        let layers_count = self.layers.len();
         for layer in self.layers.iter_mut() {
-            if layer.id == layer_index + 1 {
+            if layer.id == (layers_count as u32 - layer_index) as u32 {
                 return layer;
             }
         }
-        println!("Failed to get layer {}", layer_index);
+        println!("Failed to get mut layer {}", layer_index);
         std::process::exit(1);
     }
     pub fn get_layer(&self, layer_index: u32) -> &LayerData {
-        match self.layers.iter().find(|&x| x.id == layer_index + 1) {
+        match self.layers.iter().find(|&x| x.id == (self.layers.len() as u32 - layer_index) as u32) {
             Some(e) => e,
             None => {
                 println!("Failed to get layer {}", layer_index);
@@ -56,7 +57,11 @@ impl LevelData {
     }
 
     pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
-        Some((self.get_layer(point.z).data[self.x_y_to_index(point.x, point.y)]) as usize)
+        let id_from_json = self.get_layer(point.z).data[self.x_y_to_index(point.x, point.y)];
+        if id_from_json == 0 {
+            return None;
+        }
+        return Some((id_from_json - 1) as usize)
     }
 
     pub fn change_id_on_point(&mut self, point: Point3<u32>, new_id: u32) {
@@ -101,5 +106,6 @@ pub fn initialise_map(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet
         .create_entity()
         .with(map)
         .with(Transform::default())
+        .with(Transparent)
         .build();
 }

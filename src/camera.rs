@@ -48,6 +48,7 @@ pub fn initialise_camera(world: &mut World) {
 
     let mut transform = Transform::default();
     transform.set_translation_xyz(0.0, 0.0, 1.0);
+    transform.set_scale(Vector3::new(2.0, 2.0, 2.0));
 
     world
         .create_entity()
@@ -84,12 +85,22 @@ impl<'s> System<'s> for CameraSystem {
                 .and_then(|a| camera_join.get(a, &entities))
                 .or_else(|| camera_join.next())
             {
-                camera_transform.prepend_translation_x(x_move * 20.0 * multiplayer);
-                camera_transform.prepend_translation_y(y_move * 20.0 * multiplayer);
+                let camera_move_speed = 10.0;
+
+                camera_transform.prepend_translation_x(x_move * camera_move_speed * multiplayer);
+                camera_transform.prepend_translation_y(y_move * camera_move_speed * multiplayer);
 
                 let z_scale = 0.3 * scrool;
                 let scale = camera_transform.scale();
-                let scale = Vector3::new(scale.x + z_scale, scale.y + z_scale, scale.z + z_scale);
+
+                let max_scale = 1.0;
+                let min_scale = 2.5;
+
+                let scale = Vector3::new(
+                    (scale.x + z_scale).max(max_scale).min(min_scale),
+                    (scale.y + z_scale).max(max_scale).min(min_scale),
+                    (scale.z + z_scale).max(max_scale).min(min_scale),
+                );
                 camera_transform.set_scale(scale);
             }
         }
@@ -153,18 +164,18 @@ impl<'s> System<'s> for MouseRaycastSystem {
                 let mouse_world_position = ray.at_distance(distance);
 
                 // TileMap click
-                if input.mouse_button_is_down(MouseButton::Left) {
-                    for tilemap in (&mut tilemaps).join() {
-                        let pos = Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.0);
-                        match tilemap.to_tile(&pos, None) {
-                            Ok(p) => {
-                                println!("{}", p);
-                                // let mut point = tilemap.get_mut(&p);
-                                // tilemap.change_id_on_point(p, world);
-                                level_data.change_id_on_point(p, 616);
-                            },
-                            Err(_e) => (),
-                        }
+                for tilemap in (&mut tilemaps).join() {
+                    let pos = Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.0);
+                    match tilemap.to_tile(&pos, None) {
+                        Ok(p) => {
+                            if input.mouse_button_is_down(MouseButton::Left) {
+                                let id_point = level_data.get_id_in_point(p);
+                                println!("{} {}", pos, match id_point {Some(e) => e, None => 0});
+
+                                // level_data.change_id_on_point(p, 30);
+                            }
+                        },
+                        Err(_e) => (),
                     }
                 }
 
