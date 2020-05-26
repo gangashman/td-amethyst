@@ -17,7 +17,7 @@ use amethyst::{
     assets::{Handle, ProgressCounter},
     ui::{RenderUi, UiBundle, UiCreator},
 };
-use amethyst_tiles::{MortonEncoder, RenderTiles2D};
+use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
 use utils::load_sprite_sheet;
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile};
@@ -102,7 +102,7 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderFlat2D::default())
                 .with_plugin(RenderUi::default())
-                .with_plugin(RenderTiles2D::<BlockTile, MortonEncoder>::default()),
+                .with_plugin(RenderTiles2D::<BlockTile, MortonEncoder2D>::default()),
         )?
         .with_bundle(TransformBundle::new())?
 

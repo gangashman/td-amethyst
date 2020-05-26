@@ -10,8 +10,9 @@ use amethyst::{
     assets::{Handle},
 };
 use std::fs;
-use amethyst_tiles::{MortonEncoder, Tile, TileMap, DrawTiles2D};
+use amethyst_tiles::{MortonEncoder2D, Tile, TileMap};
 use serde::{Deserialize, Serialize};
+use amethyst_rendy::palette::Srgba;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct LayerData {
@@ -42,6 +43,7 @@ impl LevelData {
         println!("Failed to get mut layer {}", layer_index);
         std::process::exit(1);
     }
+
     pub fn get_layer(&self, layer_index: u32) -> &LayerData {
         match self.layers.iter().find(|&x| x.id == (self.layers.len() as u32 - layer_index) as u32) {
             Some(e) => e,
@@ -58,10 +60,10 @@ impl LevelData {
 
     pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
         let id_from_json = self.get_layer(point.z).data[self.x_y_to_index(point.x, point.y)];
-        if id_from_json == 0 {
-            return None;
+        match id_from_json {
+            0 => None,
+            _ => Some((id_from_json - 1) as usize),
         }
-        return Some((id_from_json - 1) as usize)
     }
 
     pub fn change_id_on_point(&mut self, point: Point3<u32>, new_id: u32) {
@@ -75,6 +77,10 @@ pub struct BlockTile;
 impl Tile for BlockTile {
     fn sprite(&self, point: Point3<u32>, world: &World) -> Option<usize> {
         world.fetch::<LevelData>().get_id_in_point(point)
+    }
+
+    fn tint(&self, coordinates: Point3<u32>, world: &World) -> Srgba {
+        Srgba::new(1.0, 1.0, 1.0, 1.0)
     }
 }
 
@@ -96,7 +102,7 @@ pub fn initialise_map(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet
 
     world.insert::<LevelData>(_level_data);
 
-    let map = TileMap::<BlockTile, MortonEncoder>::new(
+    let map = TileMap::<BlockTile, MortonEncoder2D>::new(
         Vector3::new(world.fetch::<LevelData>().height, world.fetch::<LevelData>().width, world.fetch::<LevelData>().layers.len() as u32),
         Vector3::new(world.fetch::<LevelData>().tileheight, world.fetch::<LevelData>().tilewidth, 1),
         Some(sprite_sheet_handle),

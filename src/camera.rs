@@ -165,12 +165,15 @@ impl<'s> System<'s> for MouseRaycastSystem {
 
                 // TileMap click
                 for tilemap in (&mut tilemaps).join() {
-                    let pos = Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.0);
+                    let pos = Vector3::new(mouse_world_position.x, mouse_world_position.y, 2.0);
                     match tilemap.to_tile(&pos, None) {
                         Ok(p) => {
                             if input.mouse_button_is_down(MouseButton::Left) {
                                 let id_point = level_data.get_id_in_point(p);
-                                println!("{} {}", pos, match id_point {Some(e) => e, None => 0});
+                                let string_id = match id_point {
+                                    Some(e) => format!("{}", e), None => "None".to_string()
+                                };
+                                println!("{} {}", pos, string_id);
 
                                 // level_data.change_id_on_point(p, 30);
                             }
