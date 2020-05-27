@@ -15,6 +15,7 @@ ron = "*"
 winit = "*"
 serde_json = "1.0"
 serde = "1.0.110"
+log = "0.4.8"
 
 [features]
 default = ["vulkan"]

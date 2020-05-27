@@ -11,20 +11,40 @@ use amethyst::{
         types::DefaultBackend,
         RenderingBundle,
     },
+    input::{is_close_requested, is_key_down, InputBundle, StringBindings},
     utils::application_root_dir,
-    input::{InputBundle, StringBindings},
     assets::ProgressCounter,
     ui::{RenderUi, UiBundle, UiCreator},
+    winit::VirtualKeyCode,
 };
 use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
 use utils::load_sprite_sheet;
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile};
 use unit::load_unit_info;
+use log::info;
+
+pub enum TimeState {
+    Prepare,
+    Pause,
+    Play
+}
 
 #[derive(Default)]
 pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
+    pub state: TimeState,
+    pub game_speed: f32,
+}
+
+impl GameState {
+    fn new(game_speed: f32) -> GameState {
+        GameState {
+            progress_counter: Option::default(),
+            state: TimeState::Prepare,
+            game_speed: game_speed,
+        }
+    }
 }
 
 impl SimpleState for GameState {
@@ -48,6 +68,30 @@ impl SimpleState for GameState {
         );
         initialise_map(world, batch_1_sprite_sheet_handle, "assets/levels/1_40_40.json");
     }
+
+    fn handle_event(
+        &mut self,
+        _: StateData<'_, GameData<'_, '_>>,
+        event: StateEvent,
+    ) -> SimpleTrans {
+        match &event {
+            StateEvent::Window(event) => {
+                if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                    Trans::Quit
+                } else {
+                    Trans::None
+                }
+            }
+            StateEvent::Ui(ui_event) => {
+                // info!("[HANDLE_EVENT] You just interacted with a ui element: {:?}", ui_event);
+                Trans::None
+            }
+            StateEvent::Input(input) => {
+                // info!("Input Event detected: {:?}.", input);
+                Trans::None
+            }
+        }
+    }
 }
 
 fn main() -> amethyst::Result<()> {
@@ -61,7 +105,7 @@ fn main() -> amethyst::Result<()> {
     let binding_path = app_root.join("config").join("bindings.ron");
     let input_bundle = InputBundle::<StringBindings>::new()
         .with_bindings_from_file(binding_path)?;
-    
+
     let game_data = GameDataBuilder::default()
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
@@ -82,7 +126,7 @@ fn main() -> amethyst::Result<()> {
         .with(MouseRaycastSystem, "mouse_raycast_system", &["input_system"])
         ;
 
-    let mut game = Application::new(assets_dir, GameState::default(), game_data)?;
+    let mut game = Application::new(assets_dir, GameState::new(1.0), game_data)?;
     game.run();
 
     Ok(())
