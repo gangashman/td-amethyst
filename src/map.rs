@@ -5,9 +5,9 @@ use amethyst::{
     },
     prelude::*,
     renderer::{
-        sprite::{SpriteSheet}, Transparent,
+        sprite::SpriteSheet, Transparent,
     },
-    assets::{Handle},
+    assets::Handle,
 };
 use std::fs;
 use amethyst_tiles::{MortonEncoder2D, Tile, TileMap};
@@ -34,9 +34,8 @@ pub struct LevelData {
 
 impl LevelData {
     pub fn get_mut_layer(&mut self, layer_index: u32) -> &mut LayerData {
-        let layers_count = self.layers.len();
         for layer in self.layers.iter_mut() {
-            if layer.id == (layers_count as u32 - layer_index) as u32 {
+            if layer.id == layer_index + 1 as u32 {
                 return layer;
             }
         }
@@ -45,7 +44,7 @@ impl LevelData {
     }
 
     pub fn get_layer(&self, layer_index: u32) -> &LayerData {
-        match self.layers.iter().find(|&x| x.id == (self.layers.len() as u32 - layer_index) as u32) {
+        match self.layers.iter().find(|&x| x.id == layer_index + 1 as u32) {
             Some(e) => e,
             None => {
                 println!("Failed to get layer {}", layer_index);
@@ -76,42 +75,46 @@ impl LevelData {
 pub struct BlockTile;
 impl Tile for BlockTile {
     fn sprite(&self, point: Point3<u32>, world: &World) -> Option<usize> {
-        world.fetch::<LevelData>().get_id_in_point(point)
+        return world.fetch::<LevelData>().get_id_in_point(point)
     }
 
-    fn tint(&self, coordinates: Point3<u32>, world: &World) -> Srgba {
+    fn tint(&self, _point: Point3<u32>, _world: &World) -> Srgba {
         Srgba::new(1.0, 1.0, 1.0, 1.0)
     }
 }
 
-pub fn initialise_map(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>, json_path: &str) {
-    let json_string = match fs::read_to_string(json_path) {
+pub fn initialise_map(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>, map_json_path: &str) {
+    let json_string = match fs::read_to_string(map_json_path) {
         Ok(e) => e,
         Err(e) => {
-            println!("Failed to load level json {}: {}", json_path, e);
+            println!("Failed to load map json {}: {}", map_json_path, e);
             std::process::exit(1);
         }
     };
     let _level_data = match serde_json::from_str::<LevelData>(&json_string[..]) {
         Ok(e) => e,
         Err(e) => {
-            println!("Failed to parse json {}: {}", json_path, e);
+            println!("Failed to parse map json {}: {}", map_json_path, e);
             std::process::exit(1);
         }
     };
 
     world.insert::<LevelData>(_level_data);
 
+    let layer_size = world.fetch::<LevelData>().layers.len() as u32;
     let map = TileMap::<BlockTile, MortonEncoder2D>::new(
-        Vector3::new(world.fetch::<LevelData>().height, world.fetch::<LevelData>().width, world.fetch::<LevelData>().layers.len() as u32),
+        Vector3::new(world.fetch::<LevelData>().height, world.fetch::<LevelData>().width, layer_size),
         Vector3::new(world.fetch::<LevelData>().tileheight, world.fetch::<LevelData>().tilewidth, 1),
         Some(sprite_sheet_handle),
     );
 
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(0.0, 0.0, layer_size as f32 * -1.0);
+
     let _map_entity = world
         .create_entity()
         .with(map)
-        .with(Transform::default())
+        .with(transform)
         .with(Transparent)
         .build();
 }

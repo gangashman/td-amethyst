@@ -1,51 +1,26 @@
 mod utils;
 mod camera;
 mod map;
+mod unit;
 
 use amethyst::{
     prelude::*,
-    core::transform::{Transform, TransformBundle},
+    core::transform::TransformBundle,
     renderer::{
-        SpriteRender, SpriteSheet,
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
         RenderingBundle,
     },
     utils::application_root_dir,
-    ecs::prelude::{Component, DenseVecStorage},
     input::{InputBundle, StringBindings},
-    assets::{Handle, ProgressCounter},
+    assets::ProgressCounter,
     ui::{RenderUi, UiBundle, UiCreator},
 };
 use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
 use utils::load_sprite_sheet;
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile};
-
-#[derive(Default)]
-pub struct Block;
-
-impl Component for Block {
-    type Storage = DenseVecStorage<Self>;
-}
-
-fn initialise_blocks(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>, sprite_number: usize) {
-    let mut block_transform = Transform::default();
-
-    let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet_handle,
-        sprite_number: sprite_number,
-    };
-    
-    block_transform.set_translation_xyz(0.0, 0.0, 0.0);
-
-    world
-        .create_entity()
-        .with(sprite_render.clone())
-        .with(Block::default())
-        .with(block_transform)
-        .build();
-}
+use unit::load_unit_info;
 
 #[derive(Default)]
 pub struct GameState {
@@ -58,13 +33,7 @@ impl SimpleState for GameState {
 
         self.progress_counter = Some(Default::default());
 
-        world.register::<Block>();
-        
-        let sprite_sheet_handle = load_sprite_sheet(
-            world, "images/hyptosis_sprites.png", "images/hyptosis_sprites.ron"
-        );
-
-        initialise_blocks(world, sprite_sheet_handle, 0);
+        load_unit_info(world);
 
         world.exec(|mut creator: UiCreator<'_>| {
             creator.create(
@@ -98,7 +67,7 @@ fn main() -> amethyst::Result<()> {
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
                     RenderToWindow::from_config_path(display_config_path)?
-                        .with_clear([0.0, 0.0, 0.0, 1.0]),
+                        .with_clear([0.05, 0.05, 0.05, 1.0]),
                 )
                 .with_plugin(RenderFlat2D::default())
                 .with_plugin(RenderUi::default())

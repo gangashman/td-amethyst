@@ -11,7 +11,7 @@ Container(
     children: [
         Label(
             transform: (
-                id: "mouse_position",
+                id: "message",
                 anchor: TopLeft,
                 x: 100.,
                 y: -25.,
@@ -28,20 +28,20 @@ Container(
         ),
         Label(
             transform: (
-                id: "under_mouse",
-                anchor: TopLeft,
-                x: 100.,
-                y: -50.,
+                id: "resources",
+                anchor: TopRight,
+                x: -300.,
+                y: -25.,
                 width: 200.,
                 height: 50.,
                 transparent: true,
             ),
             text: (
-                text: "UNDER MOUSE",
+                text: "0",
                 font_size: 25.,
                 color: (1., 1., 1., 1.),
                 font: File("font/square.ttf", ("TTF", ())),
             ),
-        )
+        ),
     ]
 )
