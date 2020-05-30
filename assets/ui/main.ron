@@ -29,15 +29,15 @@ Container(
         Label(
             transform: (
                 id: "top-center",
-                anchor: TopCenter,
+                anchor: TopMiddle,
                 x: 0.,
-                y: 0.,
+                y: -25.,
                 width: 100.,
                 height: 50.,
                 transparent: true,
             ),
             text: (
-                text: "N/A",
+                text: "state",
                 font_size: 25.,
                 color: (1., 1., 1., 1.),
                 font: File("font/square.ttf", ("TTF", ())),
@@ -47,7 +47,7 @@ Container(
             transform: (
                 id: "top-resources",
                 anchor: TopRight,
-                x: -300.,
+                x: -100.,
                 y: -25.,
                 width: 200.,
                 height: 50.,

@@ -18,22 +18,14 @@ use amethyst::{
     winit::VirtualKeyCode,
 };
 use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
-use utils::load_sprite_sheet;
+use utils::{load_sprite_sheet, load_json_data};
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
-use map::{initialise_map, BlockTile};
+use map::{initialise_map, BlockTile, LevelInfo, MapData};
 use unit::load_unit_info;
 use log::info;
 
-pub enum TimeState {
-    Prepare,
-    Pause,
-    Play
-}
-
-#[derive(Default)]
 pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
-    pub state: TimeState,
     pub game_speed: f32,
 }
 
@@ -41,7 +33,6 @@ impl GameState {
     fn new(game_speed: f32) -> GameState {
         GameState {
             progress_counter: Option::default(),
-            state: TimeState::Prepare,
             game_speed: game_speed,
         }
     }
@@ -66,12 +57,16 @@ impl SimpleState for GameState {
         let batch_1_sprite_sheet_handle = load_sprite_sheet(
             world, "images/hyptosis_tile-art-batch-1.png", "images/hyptosis_tile-art-batch-1.ron"
         );
-        initialise_map(world, batch_1_sprite_sheet_handle, "assets/levels/1_40_40.json");
+        
+        world.insert::<MapData>(load_json_data::<MapData>("assets/levels/1_40_40.json"));
+        world.insert::<LevelInfo>(load_json_data::<LevelInfo>("assets/levels/1_info.json"));
+        
+        initialise_map(world, batch_1_sprite_sheet_handle);
     }
 
     fn handle_event(
         &mut self,
-        _: StateData<'_, GameData<'_, '_>>,
+        _data: StateData<'_, GameData<'_, '_>>,
         event: StateEvent,
     ) -> SimpleTrans {
         match &event {
@@ -82,12 +77,12 @@ impl SimpleState for GameState {
                     Trans::None
                 }
             }
-            StateEvent::Ui(ui_event) => {
-                // info!("[HANDLE_EVENT] You just interacted with a ui element: {:?}", ui_event);
+            StateEvent::Ui(_ui_event) => {
+                info!("[GAME] You just interacted with a ui element: {:?}", _ui_event);
                 Trans::None
             }
-            StateEvent::Input(input) => {
-                // info!("Input Event detected: {:?}.", input);
+            StateEvent::Input(_input) => {
+                // info!("Input Event detected: {:?}.", _input);
                 Trans::None
             }
         }

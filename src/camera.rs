@@ -21,7 +21,7 @@ use amethyst::{
 use std::fs::File;
 use amethyst_input::VirtualKeyCode;
 use amethyst_tiles::{MortonEncoder, TileMap, Map};
-use crate::map::{BlockTile, LevelData};
+use crate::map::{BlockTile, MapData};
 use winit::MouseButton;
 
 use amethyst::input::{InputHandler, StringBindings};
@@ -124,7 +124,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
         Read<'s, InputHandler<StringBindings>>,
         UiFinder<'s>,
         WriteStorage<'s, TileMap<BlockTile, MortonEncoder>>,
-        Write<'s, LevelData>,
+        Write<'s, MapData>,
     );
 
     fn run(
@@ -142,7 +142,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
             input,
             ui_finder,
             mut tilemaps,
-            mut level_data,
+            mut map_data,
         ): Self::SystemData,
     ) {
         // Get the mouse position if its available
@@ -169,13 +169,13 @@ impl<'s> System<'s> for MouseRaycastSystem {
                     match tilemap.to_tile(&pos, None) {
                         Ok(p) => {
                             if input.mouse_button_is_down(MouseButton::Left) {
-                                let id_point = level_data.get_id_in_point(p);
+                                let id_point = map_data.get_id_in_point(p);
                                 let string_id = match id_point {
                                     Some(e) => format!("{}", e), None => "None".to_string()
                                 };
                                 println!("{} {}", pos, string_id);
 
-                                // level_data.change_id_on_point(p, 30);
+                                // map_data.change_id_on_point(p, 30);
                             }
                         },
                         Err(_e) => (),
@@ -204,17 +204,6 @@ impl<'s> System<'s> for MouseRaycastSystem {
                         && mouse_world_position.y < max_y
                     {
                         found_name = Some(&name.name);
-                    }
-                }
-
-                if let Some(t) = ui_finder
-                    .find("under_mouse")
-                    .and_then(|e| ui_texts.get_mut(e))
-                {
-                    if let Some(name) = found_name {
-                        t.text = format!("{}", name);
-                    } else {
-                        t.text = "".to_string();
                     }
                 }
             }
