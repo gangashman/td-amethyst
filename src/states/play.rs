@@ -1,15 +1,22 @@
 extern crate amethyst;
 use amethyst::prelude::*;
+use log::info;
+use amethyst::{
+    winit::VirtualKeyCode,
+    input::{is_close_requested, is_key_down},
+    ui::{UiFinder, UiEventType, UiText},
+    ecs::prelude::Entity,
+};
 
-struct PlayState;
+pub struct PlayState;
 
 impl SimpleState for PlayState {
-    fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
     }
 
     fn handle_event(
         &mut self,
-        _data: StateData<'_, GameData<'_, '_>>,
+        data: StateData<'_, GameData<'_, '_>>,
         event: StateEvent,
     ) -> SimpleTrans {
         match &event {
@@ -20,8 +27,22 @@ impl SimpleState for PlayState {
                     Trans::None
                 }
             }
-            StateEvent::Ui(_ui_event) => {
-                info!("[PLAY] You just interacted with a ui element: {:?}", _ui_event);
+            StateEvent::Ui(ui_event) => {
+                // TODO: remove this
+                let mut top_center_entity: Option<Entity> = None;
+
+                data.world.exec(|ui_finder: UiFinder<'_>| {
+                    top_center_entity = ui_finder.find("top-center");
+                });
+
+                if ui_event.event_type == UiEventType::Click && ui_event.target == top_center_entity.unwrap() {
+                    let mut ui_text = data.world.write_storage::<UiText>();
+                    let mut top_center_text = ui_text.get_mut(top_center_entity.unwrap()).unwrap();
+
+                    top_center_text.text = String::from("start game");
+
+                    return Trans::Pop;
+                }
                 Trans::None
             }
             StateEvent::Input(_input) => {

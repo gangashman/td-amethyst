@@ -2,10 +2,12 @@ mod utils;
 mod camera;
 mod map;
 mod unit;
+mod states;
 
 use amethyst::{
     prelude::*,
     core::transform::TransformBundle,
+    ecs::prelude::Entity,
     renderer::{
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
@@ -14,7 +16,7 @@ use amethyst::{
     input::{is_close_requested, is_key_down, InputBundle, StringBindings},
     utils::application_root_dir,
     assets::ProgressCounter,
-    ui::{RenderUi, UiBundle, UiCreator},
+    ui::{RenderUi, UiBundle, UiCreator, UiEventType, UiFinder, UiText},
     winit::VirtualKeyCode,
 };
 use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
@@ -23,6 +25,7 @@ use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile, LevelInfo, MapData};
 use unit::load_unit_info;
 use log::info;
+use states::play::PlayState;
 
 pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
@@ -66,7 +69,7 @@ impl SimpleState for GameState {
 
     fn handle_event(
         &mut self,
-        _data: StateData<'_, GameData<'_, '_>>,
+        data: StateData<'_, GameData<'_, '_>>,
         event: StateEvent,
     ) -> SimpleTrans {
         match &event {
@@ -77,8 +80,22 @@ impl SimpleState for GameState {
                     Trans::None
                 }
             }
-            StateEvent::Ui(_ui_event) => {
-                info!("[GAME] You just interacted with a ui element: {:?}", _ui_event);
+            StateEvent::Ui(ui_event) => {
+                // TODO: remove this
+                let mut top_center_entity: Option<Entity> = None;
+
+                data.world.exec(|ui_finder: UiFinder<'_>| {
+                    top_center_entity = ui_finder.find("top-center");
+                });
+
+                if ui_event.event_type == UiEventType::Click && ui_event.target == top_center_entity.unwrap() {
+                    let mut ui_text = data.world.write_storage::<UiText>();
+                    let mut top_center_text = ui_text.get_mut(top_center_entity.unwrap()).unwrap();
+
+                    top_center_text.text = String::from("pause game");
+
+                    return Trans::Push(Box::new(PlayState));
+                }
                 Trans::None
             }
             StateEvent::Input(_input) => {

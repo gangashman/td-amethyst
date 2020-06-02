@@ -183,7 +183,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
                 }
 
                 // Find any sprites which the mouse is currently inside
-                let mut found_name = None;
+                let mut _found_name = None;
                 for (sprite, transform, name) in (&sprites, &transforms, &names).join() {
                     let sprite_sheet = sprite_sheets.get(&sprite.sprite_sheet).unwrap();
                     let sprite = &sprite_sheet.sprites[sprite.sprite_number];
@@ -203,7 +203,7 @@ impl<'s> System<'s> for MouseRaycastSystem {
                         && mouse_world_position.y > min_y
                         && mouse_world_position.y < max_y
                     {
-                        found_name = Some(&name.name);
+                        _found_name = Some(&name.name);
                     }
                 }
             }
