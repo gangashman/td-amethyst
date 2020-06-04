@@ -7,12 +7,30 @@ use amethyst::{
         SpriteRender, SpriteSheet,
     },
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::utils::load_sprite_sheet;
+
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct UnitType {
+    pub name: String,
+    pub sprite_name: String,
+    pub sprite_id: u32,
+    pub attack: f32,
+    pub max_health: f32,
+}
+
+#[derive(Default, Serialize, Deserialize)]
+pub struct UnitTyes {
+    pub types: Vec<UnitType>,
+}
 
 #[derive(Default)]
 pub struct Unit {
     pub team: u32,
+    pub unit_type: UnitType,
+    pub health: f32,
 }
 
 impl Component for Unit {

@@ -135,14 +135,14 @@ impl<'s> System<'s> for MouseRaycastSystem {
             cameras,
             sprites,
             names,
-            mut ui_texts,
+            _ui_texts,
             sprite_sheets,
             screen_dimensions,
             active_camera,
             input,
-            ui_finder,
+            _ui_finder,
             mut tilemaps,
-            mut map_data,
+            map_data,
         ): Self::SystemData,
     ) {
         // Get the mouse position if its available

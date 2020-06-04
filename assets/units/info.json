@@ -1,0 +1,25 @@
+{
+    "types": [
+        {
+            "name": "bug",
+            "sprite_name": "hyptosis_sprites",
+            "sprite_id": 0,
+            "attack": 10.0,
+            "max_health": 100.0
+        },
+        {
+            "name": "rat",
+            "sprite_name": "hyptosis_sprites",
+            "sprite_id": 1,
+            "attack": 10.0,
+            "max_health": 100.0
+        },
+        {
+            "name": "bar",
+            "sprite_name": "hyptosis_sprites",
+            "sprite_id": 2,
+            "attack": 10.0,
+            "max_health": 100.0
+        }
+    ]
+}

@@ -7,13 +7,12 @@ mod states;
 use amethyst::{
     prelude::*,
     core::transform::TransformBundle,
-    ecs::prelude::Entity,
     renderer::{
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
         RenderingBundle,
     },
-    input::{is_close_requested, is_key_down, InputBundle, StringBindings},
+    input::{is_close_requested, is_key_down, InputBundle, StringBindings, InputEvent, Button},
     utils::application_root_dir,
     assets::ProgressCounter,
     ui::{RenderUi, UiBundle, UiCreator, UiEventType, UiFinder, UiText},
@@ -23,9 +22,9 @@ use amethyst_tiles::{MortonEncoder2D, RenderTiles2D};
 use utils::{load_sprite_sheet, load_json_data};
 use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile, LevelInfo, MapData};
-use unit::load_unit_info;
-use log::info;
+use unit::{load_unit_info, UnitTyes};
 use states::play::PlayState;
+// use log::info;
 
 pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
@@ -47,6 +46,7 @@ impl SimpleState for GameState {
 
         self.progress_counter = Some(Default::default());
 
+        world.insert::<UnitTyes>(load_json_data::<UnitTyes>("assets/units/info.json"));
         load_unit_info(world);
 
         world.exec(|mut creator: UiCreator<'_>| {
@@ -60,10 +60,9 @@ impl SimpleState for GameState {
         let batch_1_sprite_sheet_handle = load_sprite_sheet(
             world, "images/hyptosis_tile-art-batch-1.png", "images/hyptosis_tile-art-batch-1.ron"
         );
-        
+
         world.insert::<MapData>(load_json_data::<MapData>("assets/levels/1_40_40.json"));
         world.insert::<LevelInfo>(load_json_data::<LevelInfo>("assets/levels/1_info.json"));
-        
         initialise_map(world, batch_1_sprite_sheet_handle);
     }
 
@@ -72,37 +71,34 @@ impl SimpleState for GameState {
         data: StateData<'_, GameData<'_, '_>>,
         event: StateEvent,
     ) -> SimpleTrans {
-        match &event {
-            StateEvent::Window(event) => {
-                if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
-                    Trans::Quit
-                } else {
-                    Trans::None
-                }
-            }
-            StateEvent::Ui(ui_event) => {
-                // TODO: remove this
-                let mut top_center_entity: Option<Entity> = None;
-
-                data.world.exec(|ui_finder: UiFinder<'_>| {
-                    top_center_entity = ui_finder.find("top-center");
-                });
-
-                if ui_event.event_type == UiEventType::Click && ui_event.target == top_center_entity.unwrap() {
-                    let mut ui_text = data.world.write_storage::<UiText>();
-                    let mut top_center_text = ui_text.get_mut(top_center_entity.unwrap()).unwrap();
-
-                    top_center_text.text = String::from("pause game");
-
-                    return Trans::Push(Box::new(PlayState));
-                }
-                Trans::None
-            }
-            StateEvent::Input(_input) => {
-                // info!("Input Event detected: {:?}.", _input);
-                Trans::None
+        if let StateEvent::Window(event) = &event {
+            if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                return Trans::Quit;
             }
         }
+
+        let state_change = match &event {
+            StateEvent::Ui(ui_event) => {
+                let entity = data.world.exec(|ui_finder: UiFinder<'_>| { ui_finder.find("top-center") });
+                ui_event.event_type == UiEventType::Click && ui_event.target.id() == entity.unwrap().id()
+            },
+            StateEvent::Input(input) => {
+                match input {
+                    InputEvent::ButtonPressed(dir) => dir == &Button::Key(VirtualKeyCode::Space),
+                    _ => false
+                }
+            },
+            _ => false
+        };
+        if state_change {
+            let entity = data.world.exec(|ui_finder: UiFinder<'_>| { ui_finder.find("top-center") });
+            let mut ui_text = data.world.write_storage::<UiText>();
+            let mut top_center_text = ui_text.get_mut(entity.unwrap()).unwrap();
+            top_center_text.text = String::from("pause game");
+
+            return Trans::Push(Box::new(PlayState));
+        }
+        return Trans::None;
     }
 }
 
