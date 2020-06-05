@@ -12,6 +12,7 @@ use amethyst::{
 use amethyst_tiles::{MortonEncoder2D, Tile, TileMap};
 use serde::{Deserialize, Serialize};
 use amethyst_rendy::palette::Srgba;
+use std::collections::HashMap;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct LayerData {
@@ -35,6 +36,8 @@ pub struct MapData {
 pub struct LevelInfo {
     pub spawn: Vec<u32>,
     pub enemy_spawn: Vec<Vec<u32>>,
+
+    pub waves: Vec<HashMap<String, u32>>,
 }
 
 impl MapData {

@@ -26,18 +26,9 @@ use unit::{load_unit_info, UnitTyes};
 use states::play::PlayState;
 // use log::info;
 
+#[derive(Default)]
 pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
-    pub game_speed: f32,
-}
-
-impl GameState {
-    fn new(game_speed: f32) -> GameState {
-        GameState {
-            progress_counter: Option::default(),
-            game_speed: game_speed,
-        }
-    }
 }
 
 impl SimpleState for GameState {
@@ -45,9 +36,6 @@ impl SimpleState for GameState {
         let world = _data.world;
 
         self.progress_counter = Some(Default::default());
-
-        world.insert::<UnitTyes>(load_json_data::<UnitTyes>("assets/units/info.json"));
-        load_unit_info(world);
 
         world.exec(|mut creator: UiCreator<'_>| {
             creator.create(
@@ -60,6 +48,9 @@ impl SimpleState for GameState {
         let batch_1_sprite_sheet_handle = load_sprite_sheet(
             world, "images/hyptosis_tile-art-batch-1.png", "images/hyptosis_tile-art-batch-1.ron"
         );
+
+        world.insert::<UnitTyes>(load_json_data::<UnitTyes>("assets/units/info.json"));
+        load_unit_info(world);
 
         world.insert::<MapData>(load_json_data::<MapData>("assets/levels/1_40_40.json"));
         world.insert::<LevelInfo>(load_json_data::<LevelInfo>("assets/levels/1_info.json"));
@@ -94,9 +85,9 @@ impl SimpleState for GameState {
             let entity = data.world.exec(|ui_finder: UiFinder<'_>| { ui_finder.find("top-center") });
             let mut ui_text = data.world.write_storage::<UiText>();
             let mut top_center_text = ui_text.get_mut(entity.unwrap()).unwrap();
-            top_center_text.text = String::from("pause game");
+            top_center_text.text = String::from("");
 
-            return Trans::Push(Box::new(PlayState));
+            return Trans::Push(Box::new(PlayState{ game_speed: 1.0, wave: 0 }));
         }
         return Trans::None;
     }
@@ -134,7 +125,7 @@ fn main() -> amethyst::Result<()> {
         .with(MouseRaycastSystem, "mouse_raycast_system", &["input_system"])
         ;
 
-    let mut game = Application::new(assets_dir, GameState::new(1.0), game_data)?;
+    let mut game = Application::new(assets_dir, GameState::default(), game_data)?;
     game.run();
 
     Ok(())
