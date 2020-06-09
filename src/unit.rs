@@ -91,7 +91,7 @@ pub fn spawn_wave_units(world: &mut World, wave: u32) {
     let mut spawn_points = Vec::<Vector3<f32>>::new();
     let spawn_points_len = world.fetch::<LevelInfo>().enemy_spawn.len();
 
-    let storage_tilemap = (&world).write_storage::<TileMap::<BlockTile, MortonEncoder2D>>();
+    let storage_tilemap = world.write_storage::<TileMap::<BlockTile, MortonEncoder2D>>();
     {
         let tilemap_vec = (storage_tilemap).join().collect::<Vec<_>>();
         {

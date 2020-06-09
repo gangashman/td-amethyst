@@ -3,6 +3,7 @@ mod camera;
 mod map;
 mod unit;
 mod states;
+mod ui;
 
 use amethyst::{
     prelude::*,
@@ -24,6 +25,7 @@ use camera::{initialise_camera, CameraSystem, MouseRaycastSystem};
 use map::{initialise_map, BlockTile, LevelInfo, MapData};
 use unit::{load_unit_info, UnitTyes};
 use states::play::PlayState;
+use crate::ui::menu::create_menu;
 // use log::info;
 
 #[derive(Default)]
@@ -31,9 +33,15 @@ pub struct GameState {
     pub progress_counter: Option<ProgressCounter>,
 }
 
+pub struct UserData {
+    pub money: f32,
+}
+
 impl SimpleState for GameState {
     fn on_start(&mut self, _data: StateData<'_, GameData<'_, '_>>) {
         let world = _data.world;
+
+        world.insert::<UserData>(UserData{ money: 0.0 });
 
         self.progress_counter = Some(Default::default());
 
@@ -42,6 +50,7 @@ impl SimpleState for GameState {
                 "ui/main.ron", self.progress_counter.as_mut().unwrap(),
             );
         });
+        create_menu(world);
         
         initialise_camera(world);
 
@@ -85,9 +94,9 @@ impl SimpleState for GameState {
             let entity = data.world.exec(|ui_finder: UiFinder<'_>| { ui_finder.find("top-center") });
             let mut ui_text = data.world.write_storage::<UiText>();
             let mut top_center_text = ui_text.get_mut(entity.unwrap()).unwrap();
-            top_center_text.text = String::from("");
+            top_center_text.text = String::from("level 1");
 
-            return Trans::Push(Box::new(PlayState{ game_speed: 1.0, wave: 0 }));
+            return Trans::Push(Box::new(PlayState{ wave: 0 }));
         }
         return Trans::None;
     }

@@ -8,7 +8,6 @@ use crate::unit::spawn_wave_units;
 // use log::info;
 
 pub struct PlayState {
-    pub game_speed: f32,
     pub wave: u32,
 }
 
