@@ -3,7 +3,7 @@ use amethyst::{
         math::{Point3, Vector3},
         Transform,
     },
-    prelude::*,
+    prelude::{World, WorldExt, Builder},
     renderer::{
         sprite::SpriteSheet, Transparent,
     },
@@ -13,6 +13,7 @@ use amethyst_tiles::{MortonEncoder2D, Tile, TileMap};
 use serde::{Deserialize, Serialize};
 use amethyst_rendy::palette::Srgba;
 use std::collections::HashMap;
+use std::iter::FromIterator;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct LayerData {
@@ -34,39 +35,50 @@ pub struct MapData {
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct LevelInfo {
-    pub spawn: Vec<u32>,
     pub enemy_spawn: Vec<Vec<u32>>,
+    pub spawn_speed: u32,
+    pub levels: Vec<HashMap<String, u32>>,
+}
 
-    pub waves: Vec<HashMap<String, u32>>,
+impl LevelInfo {
+    pub fn get_units_count(&self, wave: u32) -> u32 {
+        let mut count: u32 = 0;
+        for (_key, value) in &self.levels[wave as usize] {
+            count += value;
+        }
+        count
+    }
+
+    pub fn get_unit_by_index(&self, wave: u32, index: u32) -> Option<String> {
+        let units_count = self.get_units_count(wave);
+
+        let mut wave_units = self.levels[wave as usize].clone();
+        let units_types = Vec::from_iter(self.levels[wave as usize].keys());
+
+        for i in 0..units_count {
+            let key = units_types[(i % units_types.len() as u32) as usize];
+            if i == index {
+                return Some(key.to_string());
+            }
+
+            *wave_units.get_mut(key).unwrap() += 1;
+
+            if wave_units[key] <= 0 {
+                wave_units.remove(key);
+            }
+        }
+        None
+    }
 }
 
 impl MapData {
-    pub fn get_mut_layer(&mut self, layer_index: u32) -> &mut LayerData {
-        for layer in self.layers.iter_mut() {
-            if layer.id == layer_index + 1 as u32 {
-                return layer;
-            }
-        }
-        println!("Failed to get mut layer {}", layer_index);
-        std::process::exit(1);
-    }
-
-    pub fn get_layer(&self, layer_index: u32) -> &LayerData {
-        match self.layers.iter().find(|&x| x.id == layer_index + 1 as u32) {
-            Some(e) => e,
-            None => {
-                println!("Failed to get layer {}", layer_index);
-                std::process::exit(1);
-            }
-        }
-    }
 
     pub fn x_y_to_index(&self, x: u32, y: u32) -> usize {
         (y * self.height + x) as usize
     }
 
     pub fn get_id_in_point(&self, point: Point3<u32>) -> Option<usize> {
-        let id_from_json = self.get_layer(point.z).data[self.x_y_to_index(point.x, point.y)];
+        let id_from_json = self.layers[point.z as usize].data[self.x_y_to_index(point.x, point.y)];
         match id_from_json {
             0 => None,
             _ => Some((id_from_json - 1) as usize),
@@ -75,7 +87,7 @@ impl MapData {
 
     pub fn change_id_on_point(&mut self, point: Point3<u32>, new_id: u32) {
         let index = MapData::x_y_to_index(&self, point.x, point.y);
-        self.get_mut_layer(point.z).data[index] = new_id;
+        self.layers[point.z as usize].data[index] = new_id;
     }
 }
 

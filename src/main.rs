@@ -96,7 +96,7 @@ impl SimpleState for GameState {
             let mut top_center_text = ui_text.get_mut(entity.unwrap()).unwrap();
             top_center_text.text = String::from("level 1");
 
-            return Trans::Push(Box::new(PlayState{ wave: 0 }));
+            return Trans::Push(Box::new(PlayState::new(0)));
         }
         return Trans::None;
     }

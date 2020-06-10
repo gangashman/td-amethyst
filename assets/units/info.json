@@ -15,7 +15,7 @@
             "max_health": 100.0
         },
         {
-            "name": "bar",
+            "name": "bat",
             "sprite_name": "hyptosis_sprites",
             "sprite_id": 2,
             "attack": 10.0,

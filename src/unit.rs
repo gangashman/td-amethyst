@@ -2,20 +2,18 @@ use amethyst::{
     prelude::*,
     core::transform::Transform,
     ecs::prelude::{Component, DenseVecStorage},
-    ecs::Join,
     assets::Handle,
     renderer::{
         SpriteRender, SpriteSheet,
     },
     core::math::{
-        UnitQuaternion, Vector3, Translation3, Point3,
+        UnitQuaternion, Vector3, Translation3,
     },
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::utils::load_sprite_sheet;
-use amethyst_tiles::{TileMap, MortonEncoder2D, Map};
-use crate::map::{LevelInfo, BlockTile};
+use crate::utils::{load_sprite_sheet, get_world_spawn_points};
+use crate::map::{LevelInfo};
 
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct UnitType {
@@ -47,9 +45,9 @@ impl Component for Unit {
     type Storage = DenseVecStorage<Self>;
 }
 
-fn initialise_unit<'a>(world: &'a mut World, type_name: String, pos: Vector3<f32>, team: u32) {
+fn initialise_unit<'a>(world: &'a mut World, type_name: &String, pos: Vector3<f32>, team: u32) {
     let units_types = world.fetch::<UnitTyes>().types.clone();
-    let unit_type = units_types.iter().find(|&x| x.name == type_name).unwrap();
+    let unit_type = units_types.iter().find(|&x| &x.name == type_name).unwrap();
     
     let sprite_sheet_handle = world.fetch::<SpriteData>().sprite_handles[&unit_type.sprite_name].clone();
 
@@ -58,7 +56,6 @@ fn initialise_unit<'a>(world: &'a mut World, type_name: String, pos: Vector3<f32
         sprite_number: unit_type.sprite_id as usize,
     };
 
-    println!("Spwan {} team {} on {}, {}", &type_name, &team, &pos.x, &pos.y);
     world
         .create_entity()
         .with(sprite_render.clone())
@@ -87,35 +84,18 @@ pub fn load_unit_info(world: &mut World) {
     world.insert::<SpriteData>(sprite_data);
 }
 
-pub fn spawn_wave_units(world: &mut World, wave: u32) {
-    let mut spawn_points = Vec::<Vector3<f32>>::new();
+pub fn spawn_unit(world: &mut World, wave: u32, index: u32) {
+    let spawn_points = get_world_spawn_points(world);
     let spawn_points_len = world.fetch::<LevelInfo>().enemy_spawn.len();
+    let pos = spawn_points[(index % spawn_points_len as u32) as usize];
 
-    let storage_tilemap = world.write_storage::<TileMap::<BlockTile, MortonEncoder2D>>();
-    {
-        let tilemap_vec = (storage_tilemap).join().collect::<Vec<_>>();
-        {
-            let tile_map = tilemap_vec.first().unwrap();
-            for i_point in 0..spawn_points_len {
-                let point = &world.fetch::<LevelInfo>().enemy_spawn[i_point];
-                spawn_points.push(tile_map.to_world(&Point3::new(point[0] as u32, point[1] as u32, 2), None));
-            }
+    let unit_name = match world.fetch::<LevelInfo>().get_unit_by_index(wave, index) {
+        Some(e) => e,
+        None => {
+            println!("get_unit_by_index return none. wave: {} index: {}", wave, index);
+            std::process::exit(1);
         }
-    }
-    drop(storage_tilemap);
-
-    let mut i: u32 = 0;
-    
-    let wave_info: HashMap<String, u32> = world.fetch::<LevelInfo>().waves[wave as usize].clone();
-    for (type_name, ammount) in wave_info.iter() {
-        for _ in 0..ammount.clone() {
-            initialise_unit(
-                world,
-                type_name.to_string(),
-                spawn_points[(i % spawn_points_len as u32) as usize],
-                1
-            );
-            i += 1;
-        }
-    }
+    };
+    initialise_unit(world, &unit_name, pos, 1);
+    println!("{}) Spwan {} in {}, {}", &index + 1, &unit_name, &pos.x, &pos.y);
 }

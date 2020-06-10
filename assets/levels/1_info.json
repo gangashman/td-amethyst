@@ -1,8 +1,8 @@
 {
-    "spawn": [2, 17],
-    "enemy_spawn": [[38, 12], [38, 16], [38, 21]],
-    "waves": [
-        {"bug": 3, "rat": 3},
-        {"bug": 6, "rat": 6}
+    "enemy_spawn": [[39, 11], [39, 17], [39, 22]],
+    "spawn_speed": 2000,
+    "levels": [
+        {"bug": 10, "rat": 5},
+        {"bug": 20, "rat": 10, "bat": 5}
     ]
 }

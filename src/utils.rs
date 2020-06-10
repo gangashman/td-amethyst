@@ -3,10 +3,16 @@ use amethyst::{
     renderer::{
         ImageFormat, SpriteSheet, SpriteSheetFormat, Texture,
     },
+    ecs::Join,
     assets::{AssetStorage, Loader, Handle},
+    core::math::{
+        Vector3, Point3,
+    },
 };
 use std::fs;
 use serde::de::DeserializeOwned;
+use crate::map::{LevelInfo, BlockTile};
+use amethyst_tiles::{TileMap, MortonEncoder2D, Map};
 
 pub fn load_sprite_sheet(world: &mut World, image_path: &str, ron_path: &str) -> Handle<SpriteSheet> {
     // Load the sprite sheet necessary to render the graphics.
@@ -48,4 +54,22 @@ pub fn load_json_data<T: DeserializeOwned>(json_path: &str) -> T {
             std::process::exit(1);
         }
     }
+}
+
+pub fn get_world_spawn_points(world: &mut World) -> Vec::<Vector3<f32>> {
+    let mut spawn_points = Vec::<Vector3<f32>>::new();
+    let spawn_points_len = world.fetch::<LevelInfo>().enemy_spawn.len();
+
+    let storage_tilemap = world.write_storage::<TileMap::<BlockTile, MortonEncoder2D>>();
+    {
+        let tilemap_vec = (storage_tilemap).join().collect::<Vec<_>>();
+        {
+            let tile_map = tilemap_vec.first().unwrap();
+            for i_point in 0..spawn_points_len {
+                let point = &world.fetch::<LevelInfo>().enemy_spawn[i_point];
+                spawn_points.push(tile_map.to_world(&Point3::new(point[0] as u32, point[1] as u32, 2), None));
+            }
+        }
+    }
+    spawn_points
 }
